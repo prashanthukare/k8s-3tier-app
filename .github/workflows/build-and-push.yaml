@@ -1,0 +1,61 @@
+name: Build and Push Docker Images
+
+# Runs on every push to main. Builds the frontend and backend images
+# and pushes them to Docker Hub.
+#
+# Setup needed once, in the repo: Settings -> Secrets and variables -> Actions:
+#   DOCKER_USERNAME = prashanthukare
+#   DOCKER_PASSWORD = a Docker Hub access token (hub.docker.com -> Account Settings -> Security)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push the backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./app/backend
+          push: true
+          tags: prashanthukare/k8s-3tier-backend:latest
+
+      - name: Build and push the frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./app/frontend
+          push: true
+          tags: prashanthukare/k8s-3tier-frontend:latest
+
+  # Optional: automatic deploy to a cluster that GitHub can reach (for example EKS).
+  # Minikube on your laptop is NOT reachable from GitHub, so for local learning
+  # you deploy yourself with: kubectl apply -f k8s/
+  # To enable this later, add a KUBE_CONFIG secret (your kubeconfig file contents)
+  # and remove the "if: false" line.
+  deploy:
+    if: false
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+      - name: Configure cluster access
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" > $HOME/.kube/config
+      - name: Deploy to Kubernetes
+        run: kubectl apply -f k8s/
