@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3-Tier App on Kubernetes</title>
+</head>
+<body>
+  <h1>3-Tier App on Kubernetes</h1>
+  <p>Frontend: Nginx &nbsp;|&nbsp; Backend: Python Flask &nbsp;|&nbsp; Database: MySQL</p>
+  <p>Total visits recorded in the database: <strong id="visits">loading...</strong></p>
+  <script>
+    // Calls the backend API, which increments and returns the visit count in MySQL.
+    fetch("/api/visits")
+      .then(function (res) { return res.json(); })
+      .then(function (data) { document.getElementById("visits").textContent = data.visits; })
+      .catch(function () { document.getElementById("visits").textContent = "backend not reachable"; });
+  </script>
+</body>
+</html>
